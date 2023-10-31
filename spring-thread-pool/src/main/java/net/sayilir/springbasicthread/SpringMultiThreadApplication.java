@@ -5,14 +5,23 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @SpringBootApplication
 public class SpringMultiThreadApplication {
     public static void main(String[] args){
-        Executor executor= Executors.newSingleThreadExecutor();
-        RunnableWorker runnableWorker= new RunnableWorker("worker 1");
-        executor.execute(runnableWorker);
+        ExecutorService executorService= Executors.newFixedThreadPool(10);
+        for (int i=0; i<10;i++){
+            RunnableWorker runnableWorker = new RunnableWorker("worker "+i);
+            executorService.execute(runnableWorker);
+        }
+        executorService.shutdown();
         SpringApplication.run(SpringMultiThreadApplication.class,args);
+
+        while(!executorService.isTerminated()){
+            //wait
+        }
+        System.out.println("All thread completed");
     }
 }
