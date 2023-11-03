@@ -1,6 +1,8 @@
 package net.sayilir.springmultithread.controller;
 
 import net.sayilir.springmultithread.service.WeatherService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -16,12 +18,11 @@ import java.util.concurrent.CompletableFuture;
 public class WeatherController {
     @Autowired
      private WeatherService weatherService;
+    @Qualifier("taskExecutor")
+    @Autowired
+    private ThreadPoolTaskExecutor taskExecutor;
 
-    private final ThreadPoolTaskExecutor taskExecutor;
-
-    public WeatherController(@Qualifier("taskExecutor") ThreadPoolTaskExecutor taskExecutor) {
-        this.taskExecutor = taskExecutor;
-    }
+Logger logger= LoggerFactory.getLogger(WeatherController.class);
 
 //    public WeatherController(WeatherService weatherService, ThreadPoolTaskExecutor taskExecutor) {
 //        this.weatherService = weatherService;
@@ -39,10 +40,19 @@ public class WeatherController {
         List<Double> getAllList = new ArrayList<>();
         CompletableFuture<Double> worker1, worker2, worker3;
         try {
-            System.out.println( taskExecutor.getActiveCount()+" "+ taskExecutor.getPoolSize()+ " "+  taskExecutor.getThreadPoolExecutor().getQueue().size());
+
             worker1 = weatherService.getWeatherStatus("ankara");
+            logger.info("After three calls to async getWeatherStatus, active count: {}, Pool size: {}, Queue Size: {}", taskExecutor.getActiveCount(), taskExecutor.getPoolSize(), taskExecutor.getThreadPoolExecutor().getQueue().size());
             worker2 = weatherService.getWeatherStatus("gaziantep");
+            logger.info( taskExecutor.getActiveCount()+" "+ taskExecutor.getPoolSize()+ " "+  taskExecutor.getThreadPoolExecutor().getQueue().size());
             worker3 = weatherService.getWeatherStatus("izmir");
+            logger.info( taskExecutor.getActiveCount()+" "+ taskExecutor.getPoolSize()+ " "+  taskExecutor.getThreadPoolExecutor().getQueue().size());
+            int sleeptime = 0;
+            for(int i = 0; i < 20; i++) {
+                Thread.sleep(100);
+                sleeptime=(i+1)*100;
+                logger.info("After {} milliseconds, active count: {}, Pool size: {}, Queue Size: {}", sleeptime, taskExecutor.getActiveCount(), taskExecutor.getPoolSize(), taskExecutor.getThreadPoolExecutor().getQueue().size());
+            }
             getAllList.add(worker1.get());
             getAllList.add(worker2.get());
             getAllList.add(worker3.get());
